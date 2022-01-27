@@ -71,13 +71,20 @@ def main():
             title_book = soup.select('#content h1')
             name = title_book[0].text.split(sep='::')[0].strip()
             author = title_book[0].text.split(sep='::')[1].strip()
+            url_book = domain + 'txt.php?id=' + str(id)
             img_src = soup.find(class_='bookimage').find('img')['src']
             img_name = urlsplit(img_src)[2].split(sep='/')[-1]
+            genres = soup.find('span', class_='d_book').find_all('a')
+            
+            print(name)
+            # for genre in genres:
+                # print(genre.text)
 
-            download_image(urljoin(domain, img_src), img_name)
-
-            url = domain + 'txt.php?id=' + str(id)
-            # download_txt(url, str(id) + '. ' + name)
+            for comment in soup.find_all(class_='texts'):
+                print(comment.find(class_='black').text)
+            print("\n\r")
+            # download_txt(url_book, str(id) + '. ' + name)
+            # download_image(urljoin(domain, img_src), img_name)
 
         except requests.exceptions.HTTPError:
             print("HTTPError")
