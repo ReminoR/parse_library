@@ -76,13 +76,17 @@ def main():
             img_name = urlsplit(img_src)[2].split(sep='/')[-1]
             genres = soup.find('span', class_='d_book').find_all('a')
             
-            print(name)
-            # for genre in genres:
-                # print(genre.text)
+            print('Заголовок: ', name)
 
-            for comment in soup.find_all(class_='texts'):
-                print(comment.find(class_='black').text)
-            print("\n\r")
+            genres_list = []
+            for genre in genres:
+                genres_list.append(genre.text)
+
+            print(genres_list)
+
+            # for comment in soup.find_all(class_='texts'):
+                # print(comment.find(class_='black').text)
+
             # download_txt(url_book, str(id) + '. ' + name)
             # download_image(urljoin(domain, img_src), img_name)
 
