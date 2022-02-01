@@ -59,6 +59,31 @@ def download_image(url, filename, folder="./img"):
 
     return filepath
 
+def parse_book_page(html):
+    book_info = {}
+
+    soup = BeautifulSoup(html, 'lxml')
+    title_book = soup.select('#content h1')
+    name = title_book[0].text.split(sep='::')[0].strip()
+    author = title_book[0].text.split(sep='::')[1].strip()
+    img_src = soup.find(class_='bookimage').find('img')['src']
+    img_name = urlsplit(img_src)[2].split(sep='/')[-1]
+    genres = soup.find('span', class_='d_book').find_all('a')
+    comments = soup.find_all(class_='texts')
+
+    book_info['name'] = name
+    book_info['author'] = author
+    book_info['img_src'] = img_src
+    book_info['genres'] = []
+    book_info['comments'] = []
+
+    for genre in genres:
+        book_info['genres'].append(genre.text)
+
+    for comment in comments:
+        book_info['comments'].append(comment.find(class_='black').text)
+
+    return book_info
 
 def main():
     for id in range(1, 11):
@@ -66,29 +91,12 @@ def main():
             url = domain + 'b' + str(id) + '/'
             response = requests.get(url)
             check_for_redirect(response, domain)
+            book_info = parse_book_page(response.text)
+            print(book_info)
 
-            soup = BeautifulSoup(response.text, 'lxml')
-            title_book = soup.select('#content h1')
-            name = title_book[0].text.split(sep='::')[0].strip()
-            author = title_book[0].text.split(sep='::')[1].strip()
             url_book = domain + 'txt.php?id=' + str(id)
-            img_src = soup.find(class_='bookimage').find('img')['src']
-            img_name = urlsplit(img_src)[2].split(sep='/')[-1]
-            genres = soup.find('span', class_='d_book').find_all('a')
-            
-            print('Заголовок: ', name)
-
-            genres_list = []
-            for genre in genres:
-                genres_list.append(genre.text)
-
-            print(genres_list)
-
-            # for comment in soup.find_all(class_='texts'):
-                # print(comment.find(class_='black').text)
-
-            # download_txt(url_book, str(id) + '. ' + name)
-            # download_image(urljoin(domain, img_src), img_name)
+            download_txt(url_book, str(id) + '. ' + name)
+            download_image(urljoin(domain, img_src), img_name)
 
         except requests.exceptions.HTTPError:
             print("HTTPError")
