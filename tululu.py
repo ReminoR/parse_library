@@ -1,11 +1,13 @@
 from bs4 import BeautifulSoup
 from pathvalidate import sanitize_filename, sanitize_filepath
 from urllib.parse import urljoin, urlsplit, urlparse, unquote
+import argparse
 import requests
 import os
 
 
 domain = 'https://tululu.org/'
+version = "1.0"
 
 
 def check_for_redirect(response, domain):
@@ -74,6 +76,7 @@ def parse_book_page(html):
     book_info['name'] = name
     book_info['author'] = author
     book_info['img_src'] = img_src
+    book_info['img_name'] = img_name
     book_info['genres'] = []
     book_info['comments'] = []
 
@@ -85,8 +88,29 @@ def parse_book_page(html):
 
     return book_info
 
+
+def createParser ():
+    parser = argparse.ArgumentParser(
+            prog = 'Parser of library https://tululu.org/',
+            description = '''Parser for information about a book and download''',
+            epilog = '''(c) SVA 2022 GNU licensed'''
+    )
+
+    parser.add_argument ('start_id', nargs='?', type=int, default=0, help="books id for start position of downloading")
+    parser.add_argument ('end_id', nargs='?', type=int, default=10, help="books id for end position of downloading")
+    parser.add_argument ('--version',
+            action='version',
+            help = 'Вывести номер версии',
+            version='%(prog)s {}'.format (version))
+ 
+    return parser
+
+
 def main():
-    for id in range(1, 11):
+    parser = createParser()
+    namespace = parser.parse_args()
+
+    for id in range(namespace.start_id, namespace.end_id):
         try:
             url = domain + 'b' + str(id) + '/'
             response = requests.get(url)
@@ -95,11 +119,11 @@ def main():
             print(book_info)
 
             url_book = domain + 'txt.php?id=' + str(id)
-            download_txt(url_book, str(id) + '. ' + name)
-            download_image(urljoin(domain, img_src), img_name)
+            download_txt(url_book, str(id) + '. ' + book_info['name'])
+            download_image(urljoin(domain, book_info['img_src']), book_info['img_name'])
 
         except requests.exceptions.HTTPError:
-            print("HTTPError")
+            print("HTTPError. The book id {} is not exists".format(id))
 
 
 if __name__ == "__main__":
