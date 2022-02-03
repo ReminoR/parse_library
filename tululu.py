@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 from pathvalidate import sanitize_filename, sanitize_filepath
 from urllib.parse import urljoin, urlsplit, urlparse, unquote
+from tqdm import tqdm
 import argparse
 import requests
 import os
@@ -110,7 +111,7 @@ def main():
     parser = createParser()
     namespace = parser.parse_args()
 
-    for id in range(namespace.start_id, namespace.end_id):
+    for id in tqdm(range(namespace.start_id, namespace.end_id)):
         try:
             url = domain + 'b' + str(id) + '/'
             response = requests.get(url)
