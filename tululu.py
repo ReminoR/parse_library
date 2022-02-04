@@ -111,20 +111,20 @@ def main():
     parser = createParser()
     args = parser.parse_args()
 
-    for id in tqdm(range(args.start_id, args.end_id)):
+    for book_id in tqdm(range(args.start_id, args.end_id)):
         try:
-            url = domain + 'b' + str(id) + '/'
+            url = f'{domain}b{book_id}/'
             response = requests.get(url)
             check_for_redirect(response, domain)
             book_info = parse_book_page(response.text)
             print(book_info)
 
-            url_book = domain + 'txt.php?id=' + str(id)
-            download_txt(url_book, str(id) + '. ' + book_info['name'])
+            url_book = f'{domain}txt.php?id={book_id}'
+            download_txt(url_book, str(book_id) + '. ' + book_info['name'])
             download_image(urljoin(domain, book_info['img_src']), book_info['img_name'])
 
         except requests.exceptions.HTTPError:
-            print("HTTPError. The book id {} is not exists".format(id))
+            print("HTTPError. The book id {} is not exists".format(book_id))
 
 
 if __name__ == "__main__":
