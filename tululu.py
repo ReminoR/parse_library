@@ -7,14 +7,13 @@ import requests
 import os
 
 
-domain = 'https://tululu.org/'
-version = "1.0"
+DOMAIN = 'https://tululu.org/'
+VERSION = "1.0"
 
 
 def check_for_redirect(response, domain):
     if response.history and response.url == domain:
         raise requests.exceptions.HTTPError
-    return
 
 
 def download_txt(url, filename, folder='./books/'):
@@ -32,7 +31,7 @@ def download_txt(url, filename, folder='./books/'):
     
     response = requests.get(url)
     response.raise_for_status()
-    check_for_redirect(response, domain)
+    check_for_redirect(response, DOMAIN)
 
     with open(filepath, 'wb') as file:
         file.write(response.content)
@@ -55,7 +54,7 @@ def download_image(url, filename, folder="./img"):
     
     response = requests.get(url)
     response.raise_for_status()
-    check_for_redirect(response, domain)
+    check_for_redirect(response, DOMAIN)
 
     with open(filepath, 'wb') as file:
         file.write(response.content)
@@ -90,7 +89,7 @@ def parse_book_page(html):
     return book_info
 
 
-def createParser ():
+def create_parser ():
     parser = argparse.ArgumentParser(
             prog = 'Parser of library https://tululu.org/',
             description = '''Parser for information about a book and download''',
@@ -102,26 +101,26 @@ def createParser ():
     parser.add_argument ('--version',
             action='version',
             help = 'Вывести номер версии',
-            version='%(prog)s {}'.format (version))
+            version='%(prog)s {}'.format (VERSION))
  
     return parser
 
 
 def main():
-    parser = createParser()
+    parser = create_parser()
     args = parser.parse_args()
 
     for book_id in tqdm(range(args.start_id, args.end_id)):
         try:
-            url = f'{domain}b{book_id}/'
+            url = f'{DOMAIN}b{book_id}/'
             response = requests.get(url)
-            check_for_redirect(response, domain)
+            check_for_redirect(response, DOMAIN)
             book_info = parse_book_page(response.text)
             print(book_info)
 
-            url_book = f'{domain}txt.php?id={book_id}'
+            url_book = f'{DOMAIN}txt.php?id={book_id}'
             download_txt(url_book, str(book_id) + '. ' + book_info['name'])
-            download_image(urljoin(domain, book_info['img_src']), book_info['img_name'])
+            download_image(urljoin(DOMAIN, book_info['img_src']), book_info['img_name'])
 
         except requests.exceptions.HTTPError:
             print("HTTPError. The book id {} is not exists".format(book_id))
