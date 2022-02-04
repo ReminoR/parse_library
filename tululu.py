@@ -109,9 +109,9 @@ def createParser ():
 
 def main():
     parser = createParser()
-    namespace = parser.parse_args()
+    args = parser.parse_args()
 
-    for id in tqdm(range(namespace.start_id, namespace.end_id)):
+    for id in tqdm(range(args.start_id, args.end_id)):
         try:
             url = domain + 'b' + str(id) + '/'
             response = requests.get(url)
