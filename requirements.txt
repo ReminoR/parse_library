@@ -1,4 +1,5 @@
 bs4==0.0.1
-lxml==4.7.1
-requests==2.27.1
-pathvalidate
+lxml==4.7.*
+requests==2.27.*
+pathvalidate==2.4.*
+tqdm==4.62.*
