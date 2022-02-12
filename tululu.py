@@ -96,7 +96,7 @@ def create_parser ():
             epilog = '''(c) SVA 2022 GNU licensed'''
     )
 
-    parser.add_argument ('start_id', nargs='?', type=int, default=0, help="books id for start position of downloading")
+    parser.add_argument ('start_id', nargs='?', type=int, default=1, help="books id for start position of downloading")
     parser.add_argument ('end_id', nargs='?', type=int, default=10, help="books id for end position of downloading")
     parser.add_argument ('--version',
             action='version',
@@ -114,6 +114,8 @@ def main():
         try:
             url = f'{DOMAIN}b{book_id}/'
             response = requests.get(url)
+            response.raise_for_status()
+            
             check_for_redirect(response, DOMAIN)
             book_info = parse_book_page(response.text)
             print(book_info)
@@ -123,7 +125,7 @@ def main():
             download_image(urljoin(DOMAIN, book_info['img_src']), book_info['img_name'])
 
         except requests.exceptions.HTTPError:
-            print("HTTPError. The book id {} is not exists".format(book_id))
+            print(f'HTTPError. The book id {book_id} is not exists')
 
 
 if __name__ == "__main__":
