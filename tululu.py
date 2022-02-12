@@ -76,14 +76,8 @@ def parse_book_page(html):
     book_info['author'] = author
     book_info['img_src'] = img_src
     book_info['img_name'] = img_name
-    book_info['genres'] = []
-    book_info['comments'] = []
-
-    for genre in genres:
-        book_info['genres'].append(genre.text)
-
-    for comment in comments:
-        book_info['comments'].append(comment.find(class_='black').text)
+    book_info['genres'] = [genre.text for genre in genres]
+    book_info['comments'] = [comment.find(class_='black').text for comment in comments]
 
     return book_info
 
@@ -96,7 +90,7 @@ def create_parser ():
     )
 
     parser.add_argument ('start_id', nargs='?', type=int, default=1, help="books id for start position of downloading")
-    parser.add_argument ('end_id', nargs='?', type=int, default=10, help="books id for end position of downloading")
+    parser.add_argument ('end_id', nargs='?', type=int, default=11, help="books id for end position of downloading")
     parser.add_argument ('--version',
             action='version',
             help = 'Вывести номер версии',
