@@ -16,7 +16,7 @@ def check_for_redirect(response, domain):
         raise requests.exceptions.HTTPError
 
 
-def download_txt(url, filename, folder='./books/'):
+def download_txt(url, params, filename, folder='./books/'):
     """Функция для скачивания текстовых файлов.
     Args:
         url (str): Cсылка на текст, который хочется скачать.
@@ -27,9 +27,9 @@ def download_txt(url, filename, folder='./books/'):
     """
 
     os.makedirs(folder, exist_ok=True)
-    filepath = sanitize_filepath(os.path.join(folder, sanitize_filename(filename + '.txt')))
+    filepath = sanitize_filepath(os.path.join(folder, sanitize_filename(f'{filename}.txt')))
     
-    response = requests.get(url)
+    response = requests.get(url, params=params)
     response.raise_for_status()
     check_for_redirect(response, DOMAIN)
 
@@ -113,8 +113,10 @@ def main():
             book_info = parse_book_page(response.text)
             print(book_info)
 
-            url_book = f'{DOMAIN}txt.php?id={book_id}'
-            download_txt(url_book, str(book_id) + '. ' + book_info['name'])
+            params = {"id": book_id}
+            url_book = f'{DOMAIN}txt.php'
+
+            download_txt(url_book, params, f"{book_id}. {book_info['name']}")
             download_image(urljoin(DOMAIN, book_info['img_src']), book_info['img_name'])
 
         except requests.exceptions.HTTPError:
