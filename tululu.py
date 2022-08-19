@@ -66,13 +66,13 @@ def parse_book_page(html):
 
     soup = BeautifulSoup(html, 'lxml')
     title_book = soup.select('#content h1')[0]
-    name, author = title_book.text.split(sep='::')
+    title, author = title_book.text.split(sep='::')
     img_src = soup.find(class_='bookimage').find('img')['src']
     img_name = urlsplit(img_src)[2].split(sep='/')[-1]
     genres = soup.find('span', class_='d_book').find_all('a')
     comments = soup.find_all(class_='texts')
 
-    book_info['name'] = name.strip()
+    book_info['title'] = title.strip()
     book_info['author'] = author.strip()
     book_info['img_src'] = img_src
     book_info['img_name'] = img_name
@@ -116,7 +116,7 @@ def main():
             params = {"id": book_id}
             url_book = f'{DOMAIN}txt.php'
 
-            download_txt(url_book, params, f"{book_id}. {book_info['name']}")
+            download_txt(url_book, params, f"{book_id}. {book_info['title']}")
             download_image(urljoin(DOMAIN, book_info['img_src']), book_info['img_name'])
 
         except requests.exceptions.HTTPError:
