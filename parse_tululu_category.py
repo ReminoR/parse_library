@@ -13,19 +13,23 @@ DOMAIN = "https://tululu.org/"
 VERSION = "1.0"
 
 
-def download_category(url_category, start_page, end_page, books_folder='./books/', images_folder="./img"):
+def download_category(url_category, start_page, end_page, dest_folder="./", skip_txt=False, skip_imgs=False, json_path="./"):
     """Функция для скачивания категорий книг.
     Args:
         category_number (int): id категории, которую собираетесь скачать
         start_page (int): начиная с какой страницы скачивать книги
         end_page (int): заканчивая какой страницей скачивать книги 
         books_folder (str): Папка, куда сохранять книги
+        skip_txt (bool): не скачивать книги
         images_folder (str): Папка, куда сохранять обложки книг
+        skip_imgs (bool): не скачивать картинки
+        json_path (str): указать путь для json файла
     Returns:
         str: ссылки на скаченные книги
     """
 
     books_info = []
+    os.makedirs(json_path, exist_ok=True)
 
     for page in range(start_page, end_page):
         response = requests.get(urljoin(url_category, str(page)))
@@ -43,13 +47,15 @@ def download_category(url_category, start_page, end_page, books_folder='./books/
                 book_url = urljoin(DOMAIN, book_href)
                 response = requests.get(book_url)
                 book_info = parse_book_page(response.text)
-                book_info["book_path"] = f'{sanitize_filepath(os.path.join(books_folder, sanitize_filename(book_info["title"])))}.txt'
+                book_info["book_path"] = f'{sanitize_filepath(os.path.join(dest_folder, "books", sanitize_filename(book_info["title"])))}.txt'
                 params = {"id": book_id}
                 book_url_txt = f'{DOMAIN}txt.php'
 
-                
-                download_txt(book_url_txt, params, book_info['title'], books_folder)
-                download_image(urljoin(DOMAIN, book_info['img_src']), book_info['img_name'], images_folder)
+                if not skip_txt:
+                    download_txt(book_url_txt, params, book_info['title'], os.path.join(dest_folder, 'books'))
+
+                if not skip_imgs:
+                    download_image(urljoin(DOMAIN, book_info['img_src']), book_info['img_name'], os.path.join(dest_folder, 'img'))
                 books_info.append(book_info)
                 print(book_url)
 
@@ -58,7 +64,7 @@ def download_category(url_category, start_page, end_page, books_folder='./books/
 
 
             book_info_json = json.dumps(books_info, ensure_ascii=False, indent=4)
-            with open("books.json", "w", encoding='utf8') as books:
+            with open(os.path.join(json_path, "books.json"), "w", encoding='utf8') as books:
                 books.write(book_info_json)
 
 
@@ -79,8 +85,14 @@ def create_parser():
             epilog = '''(c) SVA 2022 GNU licensed'''
     )
     parser.add_argument ('--id', nargs='?', type=int, default=55, help="Id of books category")
-    parser.add_argument ('--start_page', nargs='?', type=int, default=1, help="Page number for start of downloading from category")
-    parser.add_argument ('--end_page', nargs='?', type=int, default=None, help="Page number for finish of downloading from category")
+    parser.add_argument ('-s', '--start_page', nargs='?', type=int, default=1, help="Page number for start of downloading from category")
+    parser.add_argument ('-e', '--end_page', nargs='?', type=int, default=None, help="Page number for finish of downloading from category")
+    parser.add_argument ('-d', '--dest_folder', nargs='?', type=str, default="./", help="Destination folder for books and images")
+    parser.add_argument ('-t', '--skip_txt', action="store_true", default=False, help="Skip donwloaind of books")
+    parser.add_argument ('-i', '--skip_imgs', action="store_true", default=False, help="Skip donwloaind of images")
+    parser.add_argument ('-j', '--json_path', nargs='?', type=str, default="./", help="Destination for json file")
+
+
     parser.add_argument ('--version',
             action='version',
             help = 'Вывести номер версии',
@@ -101,7 +113,7 @@ def main():
     except TypeError:
         args.end_page = npage
 
-    download_category(url, args.start_page, args.end_page)
+    download_category(url, args.start_page, args.end_page, dest_folder = args.dest_folder, skip_txt=args.skip_txt, skip_imgs=args.skip_imgs, json_path=args.json_path)
 
 if __name__ == "__main__":
     main()
