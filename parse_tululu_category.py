@@ -21,10 +21,10 @@ def download_category(category_number, start_page, end_page, books_folder='./boo
         check_for_redirect(response, DOMAIN)
 
         soup = BeautifulSoup(response.text, "lxml")
-        books_html = soup.find_all(class_="d_book")
+        books_links = soup.select(".d_book .bookimage a")
 
-        for book_html in books_html:
-            book_href = book_html.find("a")["href"]
+        for book_link in books_links:
+            book_href = book_link["href"]
             book_id = re.search("\d+", book_href)[0]
 
             try:
