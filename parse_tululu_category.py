@@ -3,6 +3,8 @@ import os
 import requests
 import json
 import argparse
+import sys
+import time
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from pathvalidate import sanitize_filename, sanitize_filepath
@@ -28,43 +30,63 @@ def download_category(url_category, start_page, end_page, dest_folder="./", skip
         str: ссылки на скаченные книги
     """
 
-    books_info = []
+    collection = []
     os.makedirs(json_path, exist_ok=True)
 
     for page in range(start_page, end_page):
-        response = requests.get(urljoin(url_category, str(page)))
-        response.raise_for_status()
-        check_for_redirect(response, DOMAIN)
+        try:
+            response = requests.get(urljoin(url_category, str(page)))
+            response.raise_for_status()
+            check_for_redirect(response, DOMAIN)
 
-        soup = BeautifulSoup(response.text, "lxml")
-        books_links = soup.select(".d_book .bookimage a")
-
-        for book_link in books_links:
-            book_href = book_link["href"]
-            book_id = re.search("\d+", book_href)[0]
-
-            try:
-                book_url = urljoin(DOMAIN, book_href)
-                response = requests.get(book_url)
-                book_info = parse_book_page(response.text)
-                book_info["book_path"] = f'{sanitize_filepath(os.path.join(dest_folder, "books", sanitize_filename(book_info["title"])))}.txt'
-                params = {"id": book_id}
-                book_url_txt = f'{DOMAIN}txt.php'
-
-                if not skip_txt:
-                    download_txt(book_url_txt, params, book_info['title'], os.path.join(dest_folder, 'books'))
-
-                if not skip_imgs:
-                    download_image(urljoin(DOMAIN, book_info['img_src']), book_info['img_name'], os.path.join(dest_folder, 'img'))
-                books_info.append(book_info)
-
-            except requests.exceptions.HTTPError:
-                print(f'HTTPError. The book id {book_id} is not exists')
+            soup = BeautifulSoup(response.text, "lxml")
+            books_links = soup.select(".d_book .bookimage a")
 
 
-            book_info_json = json.dumps(books_info, ensure_ascii=False, indent=4)
-            with open(os.path.join(json_path, "books.json"), "w", encoding='utf8') as books:
-                books.write(book_info_json)
+            for book_link in books_links:
+                book_href = book_link["href"]
+                book_id = re.search("\d+", book_href)[0]
+
+                try:
+                    book_url = urljoin(DOMAIN, book_href)
+                    response = requests.get(book_url)
+                    book_info = parse_book_page(response.text)
+                    book_info["book_path"] = f'{sanitize_filepath(os.path.join(dest_folder, "books", sanitize_filename(book_info["title"])))}.txt'
+                    params = {"id": book_id}
+                    book_url_txt = f'{DOMAIN}txt.php'
+
+                    if not skip_txt:
+                        download_txt(book_url_txt, params, book_info['title'], os.path.join(dest_folder, 'books'))
+
+                    if not skip_imgs:
+                        download_image(urljoin(DOMAIN, book_info['img_src']), book_info['img_name'], os.path.join(dest_folder, 'img'))
+                    
+                    collection.append(book_info)
+                    
+
+                except requests.exceptions.HTTPError:
+                    print(f'HTTPError. The book id {book_id} is not exists', file=sys.stderr)
+
+                except requests.exceptions.ConnectionError:
+                    print('ConnetionError', file=sys.stderr)
+                    time.sleep(1)
+                    main()
+
+
+                collection_json = json.dumps(collection, ensure_ascii=False, indent=4)
+
+                with open(os.path.join(json_path, "books.json"), "w", encoding='utf8') as books:
+                    books.write(collection_json)
+
+        except requests.exceptions.HTTPError:
+            print(f'HTTPError. The page {page} is not exists', file=sys.stderr)
+
+        except requests.exceptions.ConnectionError:
+            print(f'ConnetionError', file=sys.stderr)
+            time.sleep(1)
+            main()
+
+
 
 
 def get_number_pages(url):
@@ -73,9 +95,9 @@ def get_number_pages(url):
     check_for_redirect(response, DOMAIN)
 
     soup = BeautifulSoup(response.text, "lxml")
-    npage = soup.select(".npage")[-1].text
+    npage = int(soup.select(".npage")[-1].text)
 
-    return int(npage)
+    return npage
 
 def create_parser():
     parser = argparse.ArgumentParser(
@@ -104,15 +126,22 @@ def main():
     parser = create_parser()
     args = parser.parse_args()
     url = f"https://tululu.org/l{args.id}/"
-    npage = get_number_pages(url)
 
     try:
+        npage = get_number_pages(url)
+
         if args.end_page > npage:
             args.end_page = npage
-    except TypeError:
-        args.end_page = npage
 
-    download_category(url, args.start_page, args.end_page, dest_folder = args.dest_folder, skip_txt=args.skip_txt, skip_imgs=args.skip_imgs, json_path=args.json_path)
+        download_category(url, args.start_page, args.end_page, dest_folder = args.dest_folder, skip_txt=args.skip_txt, skip_imgs=args.skip_imgs, json_path=args.json_path)
+    except requests.exceptions.HTTPError:
+        print(f'HTTPError. The page {url} is not exists', file=sys.stderr)
+    except requests.exceptions.ConnectionError:
+        print("ConnectionError", file=sys.stderr)
+        time.sleep(1)
+        main()
+
+
 
 if __name__ == "__main__":
     main()
