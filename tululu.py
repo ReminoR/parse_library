@@ -5,6 +5,8 @@ from tqdm import tqdm
 import argparse
 import requests
 import os
+import sys
+import time
 
 
 DOMAIN = 'https://tululu.org/'
@@ -120,7 +122,12 @@ def main():
             download_image(urljoin(DOMAIN, book_info['img_src']), book_info['img_name'])
 
         except requests.exceptions.HTTPError:
-            print(f'HTTPError. The book id {book_id} is not exists')
+            print(f'HTTPError. The book id {book_id} is not exists', file=sys.stderr)
+
+        except requests.exceptions.ConnectionError:
+            print('ConnetionError', file=sys.stderr)
+            time.sleep(1)
+            main()
 
 
 if __name__ == "__main__":
