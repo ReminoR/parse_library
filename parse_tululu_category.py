@@ -57,7 +57,6 @@ def download_category(url_category, start_page, end_page, dest_folder="./", skip
                 if not skip_imgs:
                     download_image(urljoin(DOMAIN, book_info['img_src']), book_info['img_name'], os.path.join(dest_folder, 'img'))
                 books_info.append(book_info)
-                print(book_url)
 
             except requests.exceptions.HTTPError:
                 print(f'HTTPError. The book id {book_id} is not exists')
