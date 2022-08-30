@@ -64,7 +64,6 @@ def download_image(url, filename, folder="./img"):
     return filepath
 
 def parse_book_page(html):
-    book_info = {}
 
     soup = BeautifulSoup(html, 'lxml')
     title_book = soup.select('#content h1')[0]
@@ -74,14 +73,16 @@ def parse_book_page(html):
     genres = soup.find('span', class_='d_book').find_all('a')
     comments = soup.find_all(class_='texts')
 
-    book_info['title'] = title.strip()
-    book_info['author'] = author.strip()
-    book_info['img_src'] = img_src
-    book_info['img_name'] = img_name
-    book_info['genres'] = [genre.text for genre in genres]
-    book_info['comments'] = [comment.find(class_='black').text for comment in comments]
+    book = {
+        'title': title.strip(),
+        'author': author.strip(),
+        'img_src': img_src,
+        'img_name': img_name,
+        'genres': [genre.text for genre in genres],
+        'comments': [comment.find(class_='black').text for comment in comments],
+    }
 
-    return book_info
+    return book
 
 
 def create_parser ():
@@ -112,14 +113,14 @@ def main():
             response.raise_for_status()
             
             check_for_redirect(response, DOMAIN)
-            book_info = parse_book_page(response.text)
-            print(book_info)
+            book = parse_book_page(response.text)
+            print(book)
 
             params = {"id": book_id}
             url_book = f'{DOMAIN}txt.php'
 
-            download_txt(url_book, params, f"{book_id}. {book_info['title']}")
-            download_image(urljoin(DOMAIN, book_info['img_src']), book_info['img_name'])
+            download_txt(url_book, params, f"{book_id}. {book['title']}")
+            download_image(urljoin(DOMAIN, book['img_src']), book['img_name'])
 
         except requests.exceptions.HTTPError:
             print(f'HTTPError. The book id {book_id} is not exists', file=sys.stderr)
