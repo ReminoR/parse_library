@@ -6,7 +6,10 @@
 
 ### Как установить
 Для запуска вам необходимы **python 3+**, а также библиотеки из файла requirements.txt, которые можно установить с помощью команды 
-```pip install -r requirements.txt```
+
+```bash 
+pip install -r requirements.txt
+```
 
 
 ### Позиционные аргументы утилиты tululu
