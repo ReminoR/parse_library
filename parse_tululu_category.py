@@ -50,18 +50,18 @@ def download_category(url_category, start_page, end_page, dest_folder="./", skip
                 try:
                     book_url = urljoin(DOMAIN, book_href)
                     response = requests.get(book_url)
-                    book_info = parse_book_page(response.text)
-                    book_info["book_path"] = f'{sanitize_filepath(os.path.join(dest_folder, "books", sanitize_filename(book_info["title"])))}.txt'
+                    book = parse_book_page(response.text)
+                    book["book_path"] = f'{sanitize_filepath(os.path.join(dest_folder, "books", sanitize_filename(book["title"])))}.txt'
                     params = {"id": book_id}
                     book_url_txt = f'{DOMAIN}txt.php'
 
                     if not skip_txt:
-                        download_txt(book_url_txt, params, book_info['title'], os.path.join(dest_folder, 'books'))
+                        download_txt(book_url_txt, params, book['title'], os.path.join(dest_folder, 'books'))
 
                     if not skip_imgs:
-                        download_image(urljoin(DOMAIN, book_info['img_src']), book_info['img_name'], os.path.join(dest_folder, 'img'))
+                        download_image(urljoin(DOMAIN, book['img_src']), book['img_name'], os.path.join(dest_folder, 'img'))
                     
-                    collection.append(book_info)
+                    collection.append(book)
                     
 
                 except requests.exceptions.HTTPError:
