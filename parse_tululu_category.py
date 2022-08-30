@@ -70,8 +70,6 @@ def download_category(url_category, start_page, end_page, dest_folder="./", skip
                 except requests.exceptions.ConnectionError:
                     print('ConnetionError', file=sys.stderr)
                     time.sleep(1)
-                    main()
-
 
                 collection_json = json.dumps(collection, ensure_ascii=False, indent=4)
 
@@ -84,9 +82,6 @@ def download_category(url_category, start_page, end_page, dest_folder="./", skip
         except requests.exceptions.ConnectionError:
             print(f'ConnetionError', file=sys.stderr)
             time.sleep(1)
-            main()
-
-
 
 
 def get_number_pages(url):
