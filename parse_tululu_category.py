@@ -107,7 +107,7 @@ def create_parser():
     )
     parser.add_argument ('--id', nargs='?', type=int, default=55, help="Id of books category")
     parser.add_argument ('-s', '--start_page', nargs='?', type=int, default=1, help="Page number for start of downloading from category")
-    parser.add_argument ('-e', '--end_page', nargs='?', type=int, default=None, help="Page number for finish of downloading from category")
+    parser.add_argument ('-e', '--end_page', nargs='?', type=int, default=10, help="Page number for finish of downloading from category")
     parser.add_argument ('-d', '--dest_folder', nargs='?', type=str, default="./", help="Destination folder for books and images")
     parser.add_argument ('-t', '--skip_txt', action="store_true", default=False, help="Skip donwloaind of books")
     parser.add_argument ('-i', '--skip_imgs', action="store_true", default=False, help="Skip donwloaind of images")
@@ -127,20 +127,12 @@ def main():
     args = parser.parse_args()
     url = f"https://tululu.org/l{args.id}/"
 
-    try:
-        npage = get_number_pages(url)
+    npage = get_number_pages(url)
 
-        if args.end_page > npage:
-            args.end_page = npage
+    if args.end_page > npage:
+        args.end_page = npage
 
-        download_category(url, args.start_page, args.end_page, dest_folder = args.dest_folder, skip_txt=args.skip_txt, skip_imgs=args.skip_imgs, json_path=args.json_path)
-    except requests.exceptions.HTTPError:
-        print(f'HTTPError. The page {url} is not exists', file=sys.stderr)
-    except requests.exceptions.ConnectionError:
-        print("ConnectionError", file=sys.stderr)
-        time.sleep(1)
-        main()
-
+    download_category(url, args.start_page, args.end_page, dest_folder = args.dest_folder, skip_txt=args.skip_txt, skip_imgs=args.skip_imgs, json_path=args.json_path)
 
 
 if __name__ == "__main__":
