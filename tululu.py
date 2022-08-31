@@ -29,7 +29,7 @@ def download_txt(url, params, filename, folder='./books/'):
     """
 
     os.makedirs(folder, exist_ok=True)
-    filepath = sanitize_filepath(os.path.join(folder, sanitize_filename(f'{filename}.txt')))
+    filepath = sanitize_filepath(os.path.join(folder, f'{filename}.txt'))
     
     response = requests.get(url, params=params)
     response.raise_for_status()
@@ -52,7 +52,7 @@ def download_image(url, filename, folder="./img"):
     """
 
     os.makedirs(folder, exist_ok=True)
-    filepath = sanitize_filepath(os.path.join(folder, sanitize_filename(filename)))
+    filepath = sanitize_filepath(os.path.join(folder, filename))
     
     response = requests.get(url)
     response.raise_for_status()
@@ -114,7 +114,6 @@ def main():
             
             check_for_redirect(response, DOMAIN)
             book = parse_book_page(response.text)
-            print(book)
 
             params = {"id": book_id}
             url_book = f'{DOMAIN}txt.php'
