@@ -51,7 +51,8 @@ def download_category(url_category, start_page, end_page, dest_folder="./", skip
                     book_url = urljoin(DOMAIN, book_href)
                     response = requests.get(book_url)
                     book = parse_book_page(response.text)
-                    book["book_path"] = f'{sanitize_filepath(os.path.join(dest_folder, "books", book["title"]))}.txt'
+                    path_to_books = sanitize_filepath(os.path.join(dest_folder, "books", book["title"]))
+                    book["book_path"] = f'{path_to_books}.txt'
                     params = {"id": book_id}
                     book_url_txt = f'{DOMAIN}txt.php'
 
