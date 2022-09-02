@@ -161,7 +161,7 @@ def main():
                     download_txt(book_txt_url, params, book_description['title'], os.path.join(args.dest_folder, 'books'))
 
                 if not args.skip_imgs:
-                    download_image(urljoin(DOMAIN, book_description['img_src']), book_description['img_name'], os.path.join(args.dest_folder, 'img'))
+                    download_image(urljoin(DOMAIN + book_link, book_description['img_src']), book_description['img_name'], os.path.join(args.dest_folder, 'img'))
                 
                 collection.append(book_description)
 
