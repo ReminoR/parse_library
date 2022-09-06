@@ -150,8 +150,8 @@ def main():
                 reconnection_counter = 0
                 success_connection = True
                 book_description = parse_book_page(response.text)
-                path_to_books = sanitize_filepath(os.path.join(args.dest_folder, "books", book_description["title"]))
-                book_description["book_path"] = f'{path_to_books}.txt'
+                book_path = sanitize_filepath(os.path.join(args.dest_folder, "books", book_description["title"]))
+                book_description["book_path"] = f'{book_path}.txt'
 
                 book_id = re.search("\d+", book_link)[0]
                 params = {"id": book_id}
