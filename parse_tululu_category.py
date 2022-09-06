@@ -31,6 +31,7 @@ def get_number_pages(url):
         try:
             response = requests.get(url)
             response.raise_for_status()
+            check_for_redirect(response)
             success_connection = True
             reconnection_counter == 0
 
@@ -72,7 +73,7 @@ def get_links(url, start_page, end_page):
         try:
             response = requests.get(urljoin(url, str(page)))
             response.raise_for_status()
-            check_for_redirect(response, DOMAIN)
+            check_for_redirect(response)
 
             soup = BeautifulSoup(response.text, "lxml")
             links = soup.select(".d_book .bookimage a")
@@ -147,6 +148,7 @@ def main():
             try:
                 book_url = urljoin(DOMAIN, book_link)
                 response = requests.get(book_url)
+                check_for_redirect(response)
                 reconnection_counter = 0
                 success_connection = True
                 book_description = parse_book_page(response.text)

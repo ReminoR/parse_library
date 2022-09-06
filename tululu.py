@@ -14,7 +14,7 @@ VERSION = "1.0"
 reconnection_counter = 0
 
 
-def check_for_redirect(response, domain):
+def check_for_redirect(response):
     if response.history:
         raise requests.exceptions.HTTPError
 
@@ -38,7 +38,7 @@ def download_txt(url, params, filename, folder='./books/'):
         try:
             response = requests.get(url, params=params)
             response.raise_for_status()
-            check_for_redirect(response, DOMAIN)
+            check_for_redirect(response)
             success_connection = True
             reconnection_counter == 0
 
@@ -81,7 +81,7 @@ def download_image(url, filename, folder="./img"):
         try:
             response = requests.get(url)
             response.raise_for_status()
-            check_for_redirect(response, DOMAIN)
+            check_for_redirect(response)
 
             with open(filepath, 'wb') as file:
                 file.write(response.content)
@@ -155,7 +155,7 @@ def main():
                 url = f'{DOMAIN}b{book_id}/'
                 response = requests.get(url)
                 response.raise_for_status()
-                check_for_redirect(response, DOMAIN)
+                check_for_redirect(response)
                 success_connection = True
                 book = parse_book_page(response.text)
 
