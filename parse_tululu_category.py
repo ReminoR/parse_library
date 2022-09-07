@@ -130,7 +130,7 @@ def main():
     collection = []
 
     if args.end_page == None:
-        args.end_page = args.start_page + 1
+        args.end_page = args.start_page
 
     if args.end_page > npage or args.start_page > npage:
         args.start_page = npage
@@ -180,10 +180,10 @@ def main():
                     time.sleep(3)
                     reconnection_counter = reconnection_counter + 1
 
-    collection_json = json.dumps(collection, ensure_ascii=False, indent=4)
+    collection = json.dumps(collection, ensure_ascii=False, indent=4)
 
     with open(os.path.join(args.json_path, "books.json"), "w", encoding='utf8') as books:
-        books.write(collection_json)
+        books.write(collection)
 
 
 if __name__ == "__main__":
