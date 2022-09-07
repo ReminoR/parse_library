@@ -11,7 +11,6 @@ from tqdm import tqdm
 
 DOMAIN = 'https://tululu.org/'
 VERSION = "1.0"
-reconnection_counter = 0
 
 
 def check_for_redirect(response):
@@ -31,35 +30,19 @@ def download_txt(url, params, filename, folder='./books/'):
 
     os.makedirs(folder, exist_ok=True)
     filepath = sanitize_filepath(os.path.join(folder, f'{filename}.txt'))
-    success_connection = False
-    global reconnection_counter
 
-    while not success_connection:
-        try:
-            response = requests.get(url, params=params)
-            response.raise_for_status()
-            check_for_redirect(response)
-            success_connection = True
-            reconnection_counter == 0
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        check_for_redirect(response)
 
-            with open(filepath, 'wb') as file:
-                file.write(response.content)
+        with open(filepath, 'wb') as file:
+            file.write(response.content)
 
-            return filepath
-        except requests.exceptions.HTTPError:
-            print(f'HTTPError. The book id {params["id"]} is not exists', file=sys.stderr)
-            success_connection = True
+        return filepath
 
-        except requests.exceptions.ConnectionError:
-            if reconnection_counter == 0:
-                print('ConnetionError. Reconnection attempt', file=sys.stderr)
-                reconnection_counter = reconnection_counter + 1
-                download_txt(url, params, filename, folder)
-            else:
-                print('ConnetionError. Reconnection attempt (3 sec.)', file=sys.stderr)
-                time.sleep(3)
-                reconnection_counter = reconnection_counter + 1
-                download_txt(url, params, filename, folder)
+    except requests.exceptions.HTTPError:
+        print(f'HTTPError. The book id {params["id"]} is not exists', file=sys.stderr)
 
 
 def download_image(url, filename, folder="./img"):
@@ -74,37 +57,23 @@ def download_image(url, filename, folder="./img"):
 
     os.makedirs(folder, exist_ok=True)
     filepath = sanitize_filepath(os.path.join(folder, filename))
-    success_connection = False
-    global reconnection_counter
+    connection_switch = False
     
-    while not success_connection:
-        try:
-            response = requests.get(url)
-            response.raise_for_status()
-            check_for_redirect(response)
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        check_for_redirect(response)
 
-            with open(filepath, 'wb') as file:
-                file.write(response.content)
+        with open(filepath, 'wb') as file:
+            file.write(response.content)
 
-            return filepath
-        except requests.exceptions.HTTPError:
-            print(f'HTTPError. The picture is not exists', file=sys.stderr)
-            success_connection = True
+        return filepath
 
-        except requests.exceptions.ConnectionError:
-            if reconnection_counter == 0:
-                print('ConnetionError. Reconnection attempt', file=sys.stderr)
-                reconnection_counter = reconnection_counter + 1
-                download_image(url, filename, folder)
-            else:
-                print('ConnetionError. Reconnection attempt (3 sec.)', file=sys.stderr)
-                time.sleep(3)
-                reconnection_counter = reconnection_counter + 1
-                download_image(url, filename, folder)
+    except requests.exceptions.HTTPError:
+        print(f'HTTPError. The picture is not exists', file=sys.stderr)
 
 
 def parse_book_page(html):
-
     soup = BeautifulSoup(html, 'lxml')
     title_book = soup.select('#content h1')[0]
     title, author = title_book.text.split(sep='::')
@@ -145,19 +114,18 @@ def create_parser ():
 def main():
     parser = create_parser()
     args = parser.parse_args()
-    global reconnection_counter
-
 
     for book_id in tqdm(range(args.start_id, args.end_id)):
-        success_connection = False
-        while not success_connection:
+        connection_switch = False
+        while not connection_switch:
             try:
                 url = f'{DOMAIN}b{book_id}/'
                 response = requests.get(url)
                 response.raise_for_status()
                 check_for_redirect(response)
-                success_connection = True
+                connection_switch = True
                 book = parse_book_page(response.text)
+                time.sleep(1)
 
                 params = {"id": book_id}
                 url_book = f'{DOMAIN}txt.php'
@@ -166,16 +134,11 @@ def main():
 
             except requests.exceptions.HTTPError:
                 print(f'HTTPError. The book id {book_id} is not exists', file=sys.stderr)
-                success_connection = True
+                connection_switch = True
 
             except requests.exceptions.ConnectionError:
-                if reconnection_counter == 0:
-                    print('ConnetionError. Reconnection attempt', file=sys.stderr)
-                    reconnection_counter = reconnection_counter + 1
-                else:
-                    print('ConnetionError. Reconnection attempt (3 sec.)', file=sys.stderr)
-                    time.sleep(3)
-                    reconnection_counter = reconnection_counter + 1
+                print('ConnetionError. Reconnection attempt (1 sec.)', file=sys.stderr)
+                time.sleep(1)
 
 
 if __name__ == "__main__":

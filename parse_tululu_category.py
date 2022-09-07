@@ -14,7 +14,6 @@ from tululu import download_txt, parse_book_page, download_image, check_for_redi
 
 DOMAIN = "https://tululu.org/"
 VERSION = "1.0"
-reconnection_counter = 0
 
 
 def get_number_pages(url):
@@ -24,16 +23,15 @@ def get_number_pages(url):
     Returns:
         int: количество страниц в категории
     """
-    global reconnection_counter
-    success_connection = False
+    connection_switch = False
 
-    while not success_connection:
+    while not connection_switch:
         try:
             response = requests.get(url)
             response.raise_for_status()
             check_for_redirect(response)
-            success_connection = True
-            reconnection_counter == 0
+            connection_switch = True
+            time.sleep(1)
 
             soup = BeautifulSoup(response.text, "lxml")
             pages = soup.select(".npage")
@@ -43,20 +41,14 @@ def get_number_pages(url):
                 npage = 1
 
             return npage
+            
         except requests.exceptions.HTTPError:
             print(f'HTTPError. The page is not exists', file=sys.stderr)
             quit()
 
         except requests.exceptions.ConnectionError:
-            if reconnection_counter == 0:
-                print('Get number page is failed. ConnetionError. Reconnection attempt', file=sys.stderr)
-                reconnection_counter = reconnection_counter + 1
-                get_number_pages(url)  
-            else:
-                print('Get number page is failed. ConnetionError. Reconnection attempt (3 sec.)', file=sys.stderr)
-                time.sleep(3)
-                reconnection_counter = reconnection_counter + 1
-                get_number_pages(url)
+            print('Get number page is failed. ConnetionError. Reconnection attempt', file=sys.stderr)
+            time.sleep(1)
 
 
 def get_links(url, start_page, end_page):
@@ -66,32 +58,29 @@ def get_links(url, start_page, end_page):
     Returns:
         int: количество страниц в категории
     """
-    global reconnection_counter
     book_links = []
 
     for page in tqdm(range(start_page, end_page + 1)):
-        try:
-            response = requests.get(urljoin(url, str(page)))
-            response.raise_for_status()
-            check_for_redirect(response)
+        connection_switch = False
+        while not connection_switch:
+            try:
+                response = requests.get(urljoin(url, str(page)))
+                response.raise_for_status()
+                check_for_redirect(response)
+                connection_switch = True
+                time.sleep(1)
 
-            soup = BeautifulSoup(response.text, "lxml")
-            links = soup.select(".d_book .bookimage a")
-            book_links.append([link['href'] for link in links])
+                soup = BeautifulSoup(response.text, "lxml")
+                links = soup.select(".d_book .bookimage a")
+                book_links.append([link['href'] for link in links])
 
-        except requests.exceptions.HTTPError:
-            print(f'HTTPError. The page number {page} is not exists')
+            except requests.exceptions.HTTPError:
+                print(f'HTTPError. The page number {page} is not exists')
+                connection_switch = False
 
-        except requests.exceptions.ConnectionError:
-            if reconnection_counter == 0:
+            except requests.exceptions.ConnectionError:
                 print('Get links are failed. ConnetionError. Reconnection attempt', file=sys.stderr)
-                reconnection_counter = reconnection_counter + 1
-                get_links(url, page, end_page) 
-            else:
-                print('Get links are failed. ConnetionError. Reconnection attempt (3 sec.)', file=sys.stderr)
-                time.sleep(3)
-                reconnection_counter = reconnection_counter + 1
-                get_links(url, page, end_page)
+                time.sleep(1)
 
     book_links = sum(book_links, [])
 
@@ -122,11 +111,11 @@ def create_parser():
 
 
 def main():
-    global reconnection_counter
     parser = create_parser()
     args = parser.parse_args()
     url = urljoin(DOMAIN, args.path)
     npage = get_number_pages(url)
+
     collection = []
 
     if args.end_page == None:
@@ -143,14 +132,14 @@ def main():
     book_links = get_links(url, args.start_page, args.end_page)
 
     for book_link in tqdm(book_links):
-        success_connection = False
-        while not success_connection:
+        connection_switch = False
+        while not connection_switch:
             try:
                 book_url = urljoin(DOMAIN, book_link)
                 response = requests.get(book_url)
                 check_for_redirect(response)
-                reconnection_counter = 0
-                success_connection = True
+                connection_switch = True
+                time.sleep(1)
                 book_description = parse_book_page(response.text)
                 book_path = sanitize_filepath(os.path.join(args.dest_folder, "books", book_description["title"]))
                 book_description["book_path"] = f'{book_path}.txt'
@@ -168,17 +157,12 @@ def main():
                 collection.append(book_description)
 
             except requests.exceptions.HTTPError:
-                print(f'HTTPError. The book id {book_id} is not exists', file=sys.stderr)
-                reconnection_counter = 0
+                print(f'HTTPError. The book page with id {book_id} is not exists', file=sys.stderr)
+                connection_switch = False
 
             except requests.exceptions.ConnectionError:
-                if reconnection_counter == 0:
-                    print('Downloading of book is failed. ConnetionError. Reconnection attempt', file=sys.stderr)
-                    reconnection_counter = reconnection_counter + 1
-                else:
-                    print('Downloading of book is failed. ConnetionError. Reconnection attempt (3 sec.)', file=sys.stderr)
-                    time.sleep(3)
-                    reconnection_counter = reconnection_counter + 1
+                print('Downloading of book page is failed. ConnetionError. Reconnection attempt', file=sys.stderr)
+                time.sleep(1)
 
     collection = json.dumps(collection, ensure_ascii=False, indent=4)
 
